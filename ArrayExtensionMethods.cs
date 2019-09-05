@@ -120,6 +120,22 @@ public static class ArrayExtensionMethods // : MonoBehaviour
         }
         return a;
     }
+    public static Array EfficientShuffle(this Array a)
+    {
+        //uses the Fisher-Yates method of shuffling
+        Array b = Array.CreateInstance(a.GetType().GetElementType(), a.Length);
+        var randomness = new Random();
+
+        for (int i =a.Length-1; i >=0 ; --i)
+        {
+            int rand = randomness.Next(a.Length);
+            b.SetValue(a.GetValue(rand), i);
+            a = a.RemoveFromArrayAtIndex(rand);
+        }
+        return b;
+    
+    }
+    
     public static Array Shuffle(this Array a)
     {
         int replacements = UnityEngine.Random.Range(100, 1000);

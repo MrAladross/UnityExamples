@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
@@ -58,13 +58,13 @@ public static class ArrayExtensionMethods // : MonoBehaviour
     {
         if (a.GetType().GetElementType() == o.GetType())
         {
-            if (a.Length==0)
+            if (a.Length == 0)
             {
                 Debug.Log("array length already 0.");
                 return a;
             }
             int occurrences = 0;
-            for (int i=0;i<a.Length;++i)
+            for (int i = 0; i < a.Length; ++i)
             {
                 if (a.GetValue(i).Equals(o))
                 {
@@ -124,18 +124,18 @@ public static class ArrayExtensionMethods // : MonoBehaviour
     {
         //uses the Fisher-Yates method of shuffling
         Array b = Array.CreateInstance(a.GetType().GetElementType(), a.Length);
-        var randomness = new Random();
+        var randomness = new System.Random();
 
-        for (int i =a.Length-1; i >=0 ; --i)
+        for (int i = a.Length - 1; i >= 0; --i)
         {
             int rand = randomness.Next(a.Length);
             b.SetValue(a.GetValue(rand), i);
             a = a.RemoveFromArrayAtIndex(rand);
         }
         return b;
-    
+
     }
-    
+
     public static Array Shuffle(this Array a)
     {
         int replacements = UnityEngine.Random.Range(100, 1000);
@@ -146,7 +146,7 @@ public static class ArrayExtensionMethods // : MonoBehaviour
             int A = UnityEngine.Random.Range(0, a.Length);
             int B = UnityEngine.Random.Range(0, a.Length);
 
-             
+
             object e = a.GetValue(A);
             object f = a.GetValue(B);
             object g = a.GetValue(A);
@@ -154,12 +154,39 @@ public static class ArrayExtensionMethods // : MonoBehaviour
             e = f;
             f = g;
 
-            a.SetValue(e,A);
+            a.SetValue(e, A);
             a.SetValue(f, B);
         }
-        
+
         return a;
     }
-
+    
+    
+    
+    //the following two functions are specific to the "generating holes dynamically" project
+    public static List<int> RemoveAllSpecifiedIndicesFromArray(this int[] a, bool[] indicesToRemove)
+    {
+        List<int> b = new List<int>();
+        for (int i = 0; i < indicesToRemove.Length; ++i)
+        {
+            if (!indicesToRemove[i])
+                b.Add(a[i]);
+        }
+        return b;
+    }
+    public static List<int> IndexOf(this Array a, object o)
+    {
+        List<int> result = new List<int>();
+        for (int i = 0; i < a.Length; ++i)
+        {
+            if (a.GetValue(i).Equals(o))
+            {
+                result.Add(i);
+            }
+        }
+        result.Sort();
+        return result;
+    }
 
 }
+

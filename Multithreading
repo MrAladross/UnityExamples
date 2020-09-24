@@ -1,0 +1,98 @@
+using System;
+using System.Threading;
+using System.Diagnostics;
+using System.Collections.Generic;
+public class MyObject
+{
+    int _index;
+    int pCount = 0;
+    public void MyOwnMethod()
+    {
+        pCount = Environment.ProcessorCount - 1;
+        //sharedInt was the wrong way to do things. Never multithread with shared information
+        int a = 0;
+        
+
+        Console.WriteLine("Thread started");
+        for (int i = 0; i < 1000000000; ++i)
+            a++;
+        for (int i = 0; i < 1000000000; ++i)
+            a++; 
+        for (int i = 0; i < 1000000000; ++i)
+            a++;
+        for (int i = 0; i < 1000000000; ++i)
+            a++; 
+        for (int i = 0; i < 1000000000; ++i)
+            a++;
+        for (int i = 0; i < 1000000000; ++i)
+            a++; 
+        for (int i = 0; i < 1000000000; ++i)
+            a++;
+        for (int i = 0; i < 1000000000; ++i)
+            a++;
+
+        Console.WriteLine("Finished Job1");
+        Program.count++;
+        if (Program.count == 3)
+        {
+            Program.stopWatch.Stop();
+            // Get the elapsed time as a TimeSpan value.
+            TimeSpan ts = Program.stopWatch.Elapsed;
+
+            // Format and display the TimeSpan value.
+            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                ts.Hours, ts.Minutes, ts.Seconds,
+                ts.Milliseconds / 10);
+            Console.WriteLine("RunTime " + elapsedTime);
+        }
+    }
+    public MyObject(int index)
+    {
+        _index = index;
+    }
+}
+class Program
+{
+    public static int count = 0;
+   // public static int sharedInt=0;
+    public static Stopwatch stopWatch = new Stopwatch();
+    static void Main()
+    {
+        int threadCount = Environment.ProcessorCount;
+
+
+        stopWatch.Start();
+        List<Thread> threads = new List<Thread>();
+            for (int i = 0; i < 3; ++i)
+            {
+                MyObject mob = new MyObject(i );
+
+
+                 // mob.MyOwnMethod();
+
+
+
+                Thread thr = new Thread(mob.MyOwnMethod);
+                thr.Start();
+            threads.Add(thr);
+            }
+        Program.stopWatch.Stop();
+        // Get the elapsed time as a TimeSpan value.
+        TimeSpan ts = Program.stopWatch.Elapsed;
+
+        // Format and display the TimeSpan value.
+        string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+            ts.Hours, ts.Minutes, ts.Seconds,
+            ts.Milliseconds / 10);
+        Console.WriteLine("RunTime " + elapsedTime);
+    }
+}
+
+
+/*
+ * 
+ * multithreaded with 23 threads took about 2.38 seconds
+ * multithreaded with 3 threads took about 10.89 seconds
+ * single thread took about 31 seconds
+ * multithreaded using a static variable (WRONG WAY) took 86 seconds
+ */

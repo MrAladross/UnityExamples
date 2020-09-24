@@ -9,7 +9,7 @@ public class MyObject
     public void MyOwnMethod()
     {
         pCount = Environment.ProcessorCount - 1;
-        //sharedInt was the wrong way to do things. Never multithread with shared information
+        //Program.sharedInt was the wrong way to do things. Never multithread with shared information
         int a = 0;
         
 
@@ -76,15 +76,7 @@ class Program
                 thr.Start();
             threads.Add(thr);
             }
-        Program.stopWatch.Stop();
-        // Get the elapsed time as a TimeSpan value.
-        TimeSpan ts = Program.stopWatch.Elapsed;
-
-        // Format and display the TimeSpan value.
-        string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
-            ts.Hours, ts.Minutes, ts.Seconds,
-            ts.Milliseconds / 10);
-        Console.WriteLine("RunTime " + elapsedTime);
+        //end of Main() function
     }
 }
 

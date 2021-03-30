@@ -1,0 +1,163 @@
+using UnityEngine;
+
+public class CameraController : MonoBehaviour
+{
+    int playerIndex;
+    Vector3 offset;
+    [SerializeField]
+    Transform centerOfFocus;
+    float angleOfElevation;//in radians
+    float angleOfRotation;//in radians
+    [SerializeField]
+    float minimumAOE;
+    [SerializeField]
+    float maximumAOE;
+    [SerializeField]
+    float smoothing;
+    [SerializeField]
+    float sensitivity;
+    [SerializeField]
+    float rotationMultiplier;
+    [SerializeField]
+    Vector3 focalPointCorrection;
+    [Range(0.1f,10f)]
+    [SerializeField]
+    float zoomSensitivity;
+    [Range(0,float.MaxValue)]
+    [SerializeField]
+    float minCamDistance;
+    [Range(0,float.MaxValue)]
+    [SerializeField]
+    float maxCamDistance;
+    [SerializeField]
+    bool preventObstructions;
+
+    Vector3 normalized;
+    Vector2 inputDelta;
+    bool invertXRotation;
+    bool invertYRotation;
+    float pi = 3.1415962f;
+    float cameraDistance;
+    float obstructedDistance;
+    bool sightIsObstructed;
+    private void Start()
+    {
+        offset = transform.position - (centerOfFocus.position+focalPointCorrection);
+        cameraDistance = offset.magnitude;
+        FindStartingAngles();
+
+    }
+
+    private void Update()
+    {
+        ReadInputs();
+        RotateAboutTarget();
+        if (preventObstructions)
+            RaycastForObstructions();
+        Zoom();
+        FinalizePosition();
+    }
+
+    void ReadInputs()
+    {
+        //check input for rotation values
+        if (invertXRotation)
+            inputDelta.x += InputManager.xboxControllers[playerIndex].RightStickX * sensitivity * Time.deltaTime;
+        else
+            inputDelta.x -= InputManager.xboxControllers[playerIndex].RightStickX * sensitivity * Time.deltaTime;
+        if (invertYRotation)
+            inputDelta.y += InputManager.xboxControllers[playerIndex].RightStickY * sensitivity * Time.deltaTime;
+        else
+            inputDelta.y -= InputManager.xboxControllers[playerIndex].RightStickY * sensitivity * Time.deltaTime;
+
+        inputDelta.y = Mathf.Clamp(inputDelta.y, -angleOfElevation + minimumAOE, -angleOfElevation + maximumAOE);
+    }
+    void RotateAboutTarget()
+    {   
+        float around = Mathf.Lerp(angleOfRotation, angleOfRotation + inputDelta.x, smoothing);
+        float delta = around - angleOfRotation;
+        inputDelta.x -= delta;
+        angleOfRotation += delta;
+
+
+        float vertical = Mathf.Lerp(angleOfElevation, angleOfElevation + inputDelta.y, smoothing);
+        float vdelta = vertical - angleOfElevation;
+        inputDelta.y -= vdelta;
+        angleOfElevation += vdelta;
+
+        normalized = new Vector3(Mathf.Cos(angleOfRotation), 0, Mathf.Sin(angleOfRotation));
+        normalized.y = Mathf.Tan(angleOfElevation) * normalized.magnitude;
+
+        normalized = normalized.normalized;
+    }
+    void FinalizePosition()
+    {
+        Vector3 targetPos;
+        if (!sightIsObstructed)
+        {
+            targetPos =  (centerOfFocus.position + focalPointCorrection) + normalized * cameraDistance;
+        }
+        else
+        {
+            //this method of raycasting should really only be used against walls and floors.
+            //It creates too much camera motion when all objects are included.
+            obstructedDistance = Mathf.Clamp(obstructedDistance, minCamDistance, maxCamDistance);
+            
+            targetPos = (centerOfFocus.position + focalPointCorrection) + normalized * obstructedDistance;
+        }
+        transform.position = Vector3.Lerp(transform.position, targetPos, smoothing);
+        transform.rotation = Quaternion.LookRotation(-normalized, Vector3.up);
+        
+    }
+    void RaycastForObstructions()
+    {
+        int layerMask = 1 << 8;
+
+        // This would cast rays only against colliders in layer 8.
+        // But instead we want to collide against everything except layer 8. The ~ operator does this, it inverts a bitmask.
+        layerMask = ~layerMask;
+
+        //raycast from target to camera
+        Ray ray = new Ray(centerOfFocus.position + focalPointCorrection, normalized);
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit, cameraDistance, layerMask))
+        {
+            obstructedDistance = (hit.point - (centerOfFocus.position + focalPointCorrection)).magnitude * 0.98f;
+            sightIsObstructed = true;
+        }
+        else sightIsObstructed = false;
+    }
+    void Zoom()
+    {
+        if (InputManager.xboxControllers[playerIndex].A.IsHolding)
+            cameraDistance -= Time.deltaTime * zoomSensitivity;
+        else if (InputManager.xboxControllers[playerIndex].B.IsHolding)
+            cameraDistance += Time.deltaTime * zoomSensitivity;
+        else return;
+        cameraDistance = Mathf.Clamp(cameraDistance, minCamDistance, maxCamDistance);
+    }
+    void FindStartingAngles()
+    {
+        Vector3 flatOffset = offset.GetFlatVector3();
+        angleOfElevation = Mathf.Atan(offset.y / flatOffset.magnitude);
+        Vector3 normalizedOffset = flatOffset.normalized;
+        float theta = Mathf.Asin(normalizedOffset.z);//-pi/2 to pi/2
+
+        if (normalizedOffset.x > 0 && normalizedOffset.z > 0)
+            angleOfRotation = theta;
+        if (normalizedOffset.x > 0 && normalizedOffset.z == 0)
+            angleOfRotation = 0;
+        if (normalizedOffset.x > 0 && normalizedOffset.z < 0)
+            angleOfRotation = theta;
+        if (normalizedOffset.x < 0 && normalizedOffset.z > 0)
+            angleOfRotation = -theta + pi;
+        if (normalizedOffset.x < 0 && normalizedOffset.z == 0)
+            angleOfRotation = pi;
+        if (normalizedOffset.x < 0 && normalizedOffset.z < 0)
+            angleOfRotation = -theta - pi;
+        if (normalizedOffset.x == 0 && normalizedOffset.z > 0)
+            angleOfRotation = pi / 2f;
+        if (normalizedOffset.x == 0 && normalizedOffset.z < 0)
+            angleOfRotation = -pi / 2f;
+    }
+}

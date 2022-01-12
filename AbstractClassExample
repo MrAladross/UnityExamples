@@ -1,3 +1,8 @@
+//Write each class in a separate file. Unity requires components to have matching file names and class names. 
+//Place the WoodenHittable component on an object.
+//Place the AbstractTest component on the same object and on another random object.
+//notice how the functionality works when the objects are together and the != null check prevents errors if hittable is not encountered.
+
 using UnityEngine;
 
 public abstract class Hittable : MonoBehaviour
@@ -10,9 +15,12 @@ public class WoodenHittable : Hittable
 {
    public override void TakeDamage(Weapon weapon)
    {
+      Debug.Log("Before being hit, the health was " + health);
       if (weapon.GetType() == Weapon.WeaponType.Axe)
          health -= weapon.GetDamage() * 3;
       else health -= weapon.GetDamage();
+
+      Debug.Log("After being hit, the health is " + health);
    }
 }
 
@@ -33,4 +41,22 @@ public class Weapon
    private int _damage = 1;
 
    public int GetDamage() => _damage;
+
+   public Weapon(WeaponType weaponType)
+   {
+      _weaponType = weaponType;
+   }
+}
+
+public class AbstractTest : MonoBehaviour
+{
+    // Start is called before the first frame update
+    void Awake()
+    {
+        Weapon w = new Weapon(Weapon.WeaponType.Axe);
+        Hittable h = gameObject.GetComponent<Hittable>();
+        if (h != null)
+            h.TakeDamage(w);
+    }
+
 }

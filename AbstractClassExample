@@ -1,0 +1,36 @@
+using UnityEngine;
+
+public abstract class Hittable : MonoBehaviour
+{
+   protected int health = 5;
+   public abstract void TakeDamage(Weapon weapon);
+}
+
+public class WoodenHittable : Hittable
+{
+   public override void TakeDamage(Weapon weapon)
+   {
+      if (weapon.GetType() == Weapon.WeaponType.Axe)
+         health -= weapon.GetDamage() * 3;
+      else health -= weapon.GetDamage();
+   }
+}
+
+public class Weapon
+{
+   public enum WeaponType
+   {
+      Sword,
+      Shovel,
+      Pickaxe,
+      Axe
+   }
+
+   private WeaponType _weaponType;
+
+   public WeaponType GetType() => _weaponType;
+
+   private int _damage = 1;
+
+   public int GetDamage() => _damage;
+}
